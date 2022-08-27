@@ -3,9 +3,14 @@
 #include <iostream>
 #include <cmath>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "shader.h"
 #include "stb_image.h"
 #include "camera.h"
+#include "fastnoise.h"
 
 const int DEFAULT_WIDTH = 1920;
 const int DEFAULT_HEIGHT = 1080;
@@ -27,12 +32,45 @@ int main()
 {
 	initWindow();
 
+	float vertices[] = {
+		-0.5, -0.5, 0.0f,
+		0.5, -0.5, 0.0f,
+		0.0f, 0.5f, 0.0f};
+
+	unsigned int VAO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	unsigned int VBO;
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *)0);
+	glEnableVertexAttribArray(0);
+
+	Shader shader("shader.vs", "shader.fs");
+	shader.use();
+
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(0.0f, 0.0f, -5.0f));
+
+	glm::mat4 view = glm::mat4(1.0f);
+
+	glm::mat4 projection = glm::perspective(45.0f, (float)DEFAULT_WIDTH / DEFAULT_HEIGHT, 0.1f, 100.0f);
+
+	shader.setMat4("model", model);
+	shader.setMat4("view", view);
+	shader.setMat4("projection", projection);
+
 	while (!glfwWindowShouldClose(window))
 	{
 		processInputs();
 
 		glClearColor(skyR, skyG, skyB, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
