@@ -3,6 +3,10 @@
 #include <iostream>
 #include <cmath>
 
+#include "shader.h"
+#include "stb_image.h"
+#include "camera.h"
+
 const int DEFAULT_WIDTH = 1920;
 const int DEFAULT_HEIGHT = 1080;
 
