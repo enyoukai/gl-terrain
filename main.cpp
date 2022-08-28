@@ -17,6 +17,9 @@ const int DEFAULT_WIDTH = 1920;
 const int DEFAULT_HEIGHT = 1080;
 const float RENDER_DISTANCE = 400.0f;
 
+const float OCTAVES = 6;
+const float NOISE_SCALE = 64;
+
 // struct later
 const float skyR = 0.0f;
 const float skyG = 135.0f / 255.0f;
@@ -47,6 +50,8 @@ int main()
 {
 	initWindow();
 	noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+	noise.SetFractalType(FastNoiseLite::FractalType_Ridged);
+	noise.SetFractalOctaves(OCTAVES);
 
 	Shader shader("shader.vs", "shader.fs");
 	shader.use();
@@ -63,7 +68,7 @@ int main()
 
 	lastFrame = glfwGetTime();
 
-	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -184,26 +189,7 @@ void render()
 	std::vector<float> vertices;
 	std::vector<unsigned int> indices;
 
-	// // generate vertices
-	// for (int i = -RENDER_DISTANCE / 2 + mainCamera.getWorldPosition().x; i < RENDER_DISTANCE / 2 + mainCamera.getWorldPosition().x; i++)
-	// {
-	// 	for (int j = -RENDER_DISTANCE / 2 + mainCamera.getWorldPosition().z; j < RENDER_DISTANCE / 2 + mainCamera.getWorldPosition().z; j++)
-	// 	{
-	// 		vertices.push_back((float)i);
-
-	// 		// octave method later
-	// 		float height = 16 * noise.GetNoise(1 * (float)i, 1 * (float)j) +
-	// 					   64 * noise.GetNoise(2 * (float)i, 2 * (float)j) +
-	// 					   4 * noise.GetNoise(4 * (float)i, 4 * (float)j) +
-	// 					   4 * noise.GetNoise(8 * (float)i, 8 * (float)j) +
-	// 					   4 * noise.GetNoise(16 * (float)i, 16 * (float)j) +
-	// 					   2 * noise.GetNoise(32 * (float)i, 32 * (float)j);
-
-	// 		vertices.push_back(height);
-	// 		vertices.push_back((float)j);
-	// 	}
-	// }
-
+	// generate vertices
 	for (int i = 0; i < RENDER_DISTANCE; i++)
 	{
 		for (int j = 0; j < RENDER_DISTANCE; j++)
@@ -213,13 +199,7 @@ void render()
 
 			vertices.push_back(worldX);
 
-			// octave method later
-			float height = 16 * noise.GetNoise(1 * (float)worldX, 1 * (float)worldZ) +
-						   64 * noise.GetNoise(2 * (float)worldX, 2 * (float)worldZ) +
-						   4 * noise.GetNoise(4 * (float)worldX, 4 * (float)worldZ) +
-						   4 * noise.GetNoise(8 * (float)worldX, 8 * (float)worldZ) +
-						   4 * noise.GetNoise(16 * (float)worldX, 16 * (float)worldZ) +
-						   2 * noise.GetNoise(32 * (float)worldX, 32 * (float)worldZ);
+			float height = NOISE_SCALE * noise.GetNoise(worldX, worldZ);
 
 			vertices.push_back(height);
 			vertices.push_back(worldZ);
