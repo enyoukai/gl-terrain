@@ -20,13 +20,24 @@ const float skyR = 0.0f;
 const float skyG = 135.0f / 255.0f;
 const float skyB = 1.0f;
 
+float currentFrame;
+float lastFrame;
+float deltaTime;
+
+float lastX;
+float lastY;
+float firstMouse = true;
+
+Camera mainCamera(glm::vec3(0.0f, 0.0f, 0.0f), 1.5f);
+
 GLFWwindow *window;
 
 int initWindow();
-int loadGLAD();
+int gladInit();
 void processInputs();
 
 void frame_buffer_size_callback(GLFWwindow *, int, int);
+void cursor_position_callback(GLFWwindow *, double, double);
 
 int main()
 {
@@ -63,13 +74,23 @@ int main()
 	shader.setMat4("view", view);
 	shader.setMat4("projection", projection);
 
+	lastFrame = glfwGetTime();
+
 	while (!glfwWindowShouldClose(window))
 	{
+		currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = glfwGetTime();
+
 		processInputs();
 
 		glClearColor(skyR, skyG, skyB, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		view = mainCamera.getViewMatrix();
+		shader.setMat4("view", view);
+
+		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 
 		glfwSwapBuffers(window);
@@ -98,18 +119,20 @@ int initWindow()
 	}
 
 	glfwMakeContextCurrent(window);
-	loadGLAD();
+	gladInit();
 
 	glViewport(0, 0, DEFAULT_WIDTH, DEFAULT_HEIGHT);
 	glEnable(GL_DEPTH_TEST);
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
 	glfwSetFramebufferSizeCallback(window, frame_buffer_size_callback);
+	glfwSetCursorPosCallback(window, cursor_position_callback);
 
 	return 0;
 }
 
-int loadGLAD()
+int gladInit()
 {
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
@@ -125,10 +148,45 @@ void frame_buffer_size_callback(GLFWwindow *window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
+void cursor_position_callback(GLFWwindow *window, double xpos, double ypos)
+{
+	if (firstMouse)
+	{
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+	float xoffset = xpos - lastX;
+	float yoffset = lastY - ypos;
+
+	mainCamera.rotateMouseToAngles(xoffset, yoffset);
+
+	lastX = xpos;
+	lastY = ypos;
+}
+
 void processInputs()
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
 		glfwSetWindowShouldClose(window, true);
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	{
+		mainCamera.moveForward(deltaTime);
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	{
+		mainCamera.moveRight(deltaTime);
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+	{
+		mainCamera.moveLeft(deltaTime);
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	{
+		mainCamera.moveBackward(deltaTime);
 	}
 }
