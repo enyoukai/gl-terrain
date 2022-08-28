@@ -9,7 +9,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "shader.h"
-#include "stb_image.h"
 #include "camera.h"
 #include "fastnoise.h"
 
