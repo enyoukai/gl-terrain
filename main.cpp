@@ -29,7 +29,7 @@ float lastX;
 float lastY;
 float firstMouse = true;
 
-Camera mainCamera(glm::vec3(0.0f, 0.0f, 0.0f), 1.5f);
+Camera mainCamera(glm::vec3(0.0f, 0.0f, 3.0f), 15.0f);
 FastNoiseLite noise;
 
 GLFWwindow *window;
@@ -51,11 +51,10 @@ int main()
 	shader.use();
 
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(0.0f, 0.0f, -5.0f));
 
 	glm::mat4 view = glm::mat4(1.0f);
 
-	glm::mat4 projection = glm::perspective(45.0f, (float)DEFAULT_WIDTH / DEFAULT_HEIGHT, 0.1f, 100.0f);
+	glm::mat4 projection = glm::perspective(45.0f, (float)DEFAULT_WIDTH / DEFAULT_HEIGHT, 0.1f, 200.0f);
 
 	shader.setMat4("model", model);
 	shader.setMat4("view", view);
@@ -63,7 +62,7 @@ int main()
 
 	lastFrame = glfwGetTime();
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -181,28 +180,46 @@ void processInputs()
 
 void render()
 {
+	unsigned int CHUNK_WIDTH = 100;
+	unsigned int CHUNK_HEIGHT = 100;
+
 	std::vector<float> vertices;
-	unsigned int indices[] = {
-		// note that we start from 0!
-		0, 1, 2, // first triangle
-		1, 2, 3	 // second triangle
-	};
-	for (int i = 1; i < 3; i++)
+	std::vector<unsigned int> indices;
+
+	// generate vertices
+	for (int i = 0; i < CHUNK_WIDTH; i++)
 	{
-		for (int j = 1; j < 3; j++)
+		for (int j = 0; j < CHUNK_HEIGHT; j++)
 		{
-			vertices.push_back(i);
-			vertices.push_back(100 * noise.GetNoise((float)i, (float)j));
-			vertices.push_back(j);
+			vertices.push_back((float)i);
+
+			// octave method later
+			float height = 64 * noise.GetNoise(1 * (float)i, 1 * (float)j) +
+						   32 * noise.GetNoise(2 * (float)i, 2 * (float)j) +
+						   16 * noise.GetNoise(4 * (float)i, 4 * (float)j) +
+						   8 * noise.GetNoise(8 * (float)i, 8 * (float)j) +
+						   4 * noise.GetNoise(16 * (float)i, 16 * (float)j) +
+						   2 * noise.GetNoise(32 * (float)i, 32 * (float)j);
+
+			vertices.push_back(height);
+			vertices.push_back((float)j);
 		}
 	}
 
-	for (auto i : vertices)
+	// generate indices
+	for (int i = 0; i < CHUNK_WIDTH - 1; i++)
 	{
-		std::cout << i << " ";
-	}
+		for (int j = 0; j < CHUNK_HEIGHT - 1; j++)
+		{
+			indices.push_back(CHUNK_WIDTH * i + j);
+			indices.push_back(CHUNK_WIDTH * i + j + 1);
+			indices.push_back(CHUNK_WIDTH * (i + 1) + j);
 
-	std::cout << std::endl;
+			indices.push_back(CHUNK_WIDTH * (i + 1) + j);
+			indices.push_back(CHUNK_WIDTH * i + j + 1);
+			indices.push_back(CHUNK_WIDTH * (i + 1) + j + 1);
+		}
+	}
 
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
@@ -216,11 +233,11 @@ void render()
 	unsigned int EBO;
 	glGenBuffers(1, &EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *)0);
 	glEnableVertexAttribArray(0);
 
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, (CHUNK_WIDTH - 1) * (CHUNK_HEIGHT - 1) * 6, GL_UNSIGNED_INT, 0);
 	// glDrawArrays(GL_TRIANGLES, 0, 3);
 }
