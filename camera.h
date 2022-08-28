@@ -73,6 +73,11 @@ public:
 	{
 		return glm::lookAt(cameraPosition, cameraPosition + cameraDirection, worldUp);
 	}
+
+	glm::vec3 getWorldPosition()
+	{
+		return cameraPosition;
+	}
 };
 
 #endif

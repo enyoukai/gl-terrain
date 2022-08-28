@@ -15,6 +15,7 @@
 
 const int DEFAULT_WIDTH = 1920;
 const int DEFAULT_HEIGHT = 1080;
+const float RENDER_DISTANCE = 200.0f;
 
 // struct later
 const float skyR = 0.0f;
@@ -29,7 +30,7 @@ float lastX;
 float lastY;
 float firstMouse = true;
 
-Camera mainCamera(glm::vec3(0.0f, 0.0f, 3.0f), 15.0f);
+Camera mainCamera(glm::vec3(0.0f, 0.0f, 3.0f), 50.0f);
 FastNoiseLite noise;
 
 GLFWwindow *window;
@@ -54,7 +55,7 @@ int main()
 
 	glm::mat4 view = glm::mat4(1.0f);
 
-	glm::mat4 projection = glm::perspective(45.0f, (float)DEFAULT_WIDTH / DEFAULT_HEIGHT, 0.1f, 200.0f);
+	glm::mat4 projection = glm::perspective(45.0f, (float)DEFAULT_WIDTH / DEFAULT_HEIGHT, 0.1f, RENDER_DISTANCE);
 
 	shader.setMat4("model", model);
 	shader.setMat4("view", view);
@@ -62,7 +63,7 @@ int main()
 
 	lastFrame = glfwGetTime();
 
-	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -180,16 +181,13 @@ void processInputs()
 
 void render()
 {
-	unsigned int CHUNK_WIDTH = 100;
-	unsigned int CHUNK_HEIGHT = 100;
-
 	std::vector<float> vertices;
 	std::vector<unsigned int> indices;
 
 	// generate vertices
-	for (int i = 0; i < CHUNK_WIDTH; i++)
+	for (int i = -RENDER_DISTANCE / 2 + mainCamera.getWorldPosition().x; i < RENDER_DISTANCE / 2 + mainCamera.getWorldPosition().x; i++)
 	{
-		for (int j = 0; j < CHUNK_HEIGHT; j++)
+		for (int j = -RENDER_DISTANCE / 2 + mainCamera.getWorldPosition().z; j < RENDER_DISTANCE / 2 + mainCamera.getWorldPosition().z; j++)
 		{
 			vertices.push_back((float)i);
 
@@ -207,17 +205,17 @@ void render()
 	}
 
 	// generate indices
-	for (int i = 0; i < CHUNK_WIDTH - 1; i++)
+	for (int i = 0; i < RENDER_DISTANCE - 1; i++)
 	{
-		for (int j = 0; j < CHUNK_HEIGHT - 1; j++)
+		for (int j = 0; j < RENDER_DISTANCE - 1; j++)
 		{
-			indices.push_back(CHUNK_WIDTH * i + j);
-			indices.push_back(CHUNK_WIDTH * i + j + 1);
-			indices.push_back(CHUNK_WIDTH * (i + 1) + j);
+			indices.push_back(RENDER_DISTANCE * i + j);
+			indices.push_back(RENDER_DISTANCE * i + j + 1);
+			indices.push_back(RENDER_DISTANCE * (i + 1) + j);
 
-			indices.push_back(CHUNK_WIDTH * (i + 1) + j);
-			indices.push_back(CHUNK_WIDTH * i + j + 1);
-			indices.push_back(CHUNK_WIDTH * (i + 1) + j + 1);
+			indices.push_back(RENDER_DISTANCE * (i + 1) + j);
+			indices.push_back(RENDER_DISTANCE * i + j + 1);
+			indices.push_back(RENDER_DISTANCE * (i + 1) + j + 1);
 		}
 	}
 
@@ -238,6 +236,5 @@ void render()
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *)0);
 	glEnableVertexAttribArray(0);
 
-	glDrawElements(GL_TRIANGLES, (CHUNK_WIDTH - 1) * (CHUNK_HEIGHT - 1) * 6, GL_UNSIGNED_INT, 0);
-	// glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDrawElements(GL_TRIANGLES, (RENDER_DISTANCE - 1) * (RENDER_DISTANCE - 1) * 6, GL_UNSIGNED_INT, 0);
 }
