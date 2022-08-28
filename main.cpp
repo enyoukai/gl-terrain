@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <cmath>
+#include <vector>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -29,12 +30,14 @@ float lastY;
 float firstMouse = true;
 
 Camera mainCamera(glm::vec3(0.0f, 0.0f, 0.0f), 1.5f);
+FastNoiseLite noise;
 
 GLFWwindow *window;
 
 int initWindow();
 int gladInit();
 void processInputs();
+void render();
 
 void frame_buffer_size_callback(GLFWwindow *, int, int);
 void cursor_position_callback(GLFWwindow *, double, double);
@@ -42,23 +45,7 @@ void cursor_position_callback(GLFWwindow *, double, double);
 int main()
 {
 	initWindow();
-
-	float vertices[] = {
-		-0.5, -0.5, 0.0f,
-		0.5, -0.5, 0.0f,
-		0.0f, 0.5f, 0.0f};
-
-	unsigned int VAO;
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
-
-	unsigned int VBO;
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *)0);
-	glEnableVertexAttribArray(0);
+	noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
 
 	Shader shader("shader.vs", "shader.fs");
 	shader.use();
@@ -76,6 +63,8 @@ int main()
 
 	lastFrame = glfwGetTime();
 
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 	while (!glfwWindowShouldClose(window))
 	{
 		currentFrame = glfwGetTime();
@@ -90,8 +79,7 @@ int main()
 		view = mainCamera.getViewMatrix();
 		shader.setMat4("view", view);
 
-		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		render();
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -189,4 +177,50 @@ void processInputs()
 	{
 		mainCamera.moveBackward(deltaTime);
 	}
+}
+
+void render()
+{
+	std::vector<float> vertices;
+	unsigned int indices[] = {
+		// note that we start from 0!
+		0, 1, 2, // first triangle
+		1, 2, 3	 // second triangle
+	};
+	for (int i = 1; i < 3; i++)
+	{
+		for (int j = 1; j < 3; j++)
+		{
+			vertices.push_back(i);
+			vertices.push_back(100 * noise.GetNoise((float)i, (float)j));
+			vertices.push_back(j);
+		}
+	}
+
+	for (auto i : vertices)
+	{
+		std::cout << i << " ";
+	}
+
+	std::cout << std::endl;
+
+	unsigned int VAO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	unsigned int VBO;
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
+
+	unsigned int EBO;
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *)0);
+	glEnableVertexAttribArray(0);
+
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	// glDrawArrays(GL_TRIANGLES, 0, 3);
 }
