@@ -30,7 +30,7 @@ float lastX;
 float lastY;
 float firstMouse = true;
 
-Camera mainCamera(glm::vec3(0.0f, 0.0f, 3.0f), 50.0f);
+Camera mainCamera(glm::vec3(0.0f, 10.0f, 3.0f), 50.0f);
 FastNoiseLite noise;
 
 GLFWwindow *window;
