@@ -14,10 +14,14 @@
 
 const int DEFAULT_WIDTH = 1920;
 const int DEFAULT_HEIGHT = 1080;
-const float RENDER_DISTANCE = 400.0f;
+const float RENDER_DISTANCE = 200.0f;
+const float FAR_PLANE = 1000.0f;
 
 const float OCTAVES = 6;
 const float NOISE_SCALE = 64;
+
+const float CAMERA_SPEED_DEFAULT = 15.0f;
+const float CAMERA_SPEED_FAST = 150.0f;
 
 // struct later
 const float skyR = 0.0f;
@@ -32,7 +36,7 @@ float lastX;
 float lastY;
 float firstMouse = true;
 
-Camera mainCamera(glm::vec3(0.0f, 10.0f, 3.0f), 150.0f);
+Camera mainCamera(glm::vec3(0.0f, 10.0f, 3.0f), CAMERA_SPEED_DEFAULT);
 FastNoiseLite noise;
 
 GLFWwindow *window;
@@ -59,7 +63,7 @@ int main()
 
 	glm::mat4 view = glm::mat4(1.0f);
 
-	glm::mat4 projection = glm::perspective(45.0f, (float)DEFAULT_WIDTH / DEFAULT_HEIGHT, 0.1f, RENDER_DISTANCE);
+	glm::mat4 projection = glm::perspective(45.0f, (float)DEFAULT_WIDTH / DEFAULT_HEIGHT, 0.1f, FAR_PLANE);
 
 	shader.setMat4("model", model);
 	shader.setMat4("view", view);
@@ -181,21 +185,46 @@ void processInputs()
 	{
 		mainCamera.moveBackward(deltaTime);
 	}
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+	{
+		mainCamera.moveUp(deltaTime);
+	}
+	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+	{
+		mainCamera.moveDown(deltaTime);
+	}
+
+	// TODO: callback later
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+	{
+		mainCamera.setSpeed(CAMERA_SPEED_FAST);
+	}
+	else
+	{
+		mainCamera.setSpeed(CAMERA_SPEED_DEFAULT);
+	}
 }
 
 void render()
 {
+	// TODO: fix heightmap changing weirdly when camera moves?
 	std::vector<float> vertices;
 	std::vector<unsigned int> indices;
+	std::vector<float> normals;
 
 	// generate vertices
 	for (int i = 0; i < RENDER_DISTANCE; i++)
 	{
 		for (int j = 0; j < RENDER_DISTANCE; j++)
 		{
-			float worldX = (float)i - (float)RENDER_DISTANCE / 2 + mainCamera.getWorldPosition().x;
-			float worldZ = (float)j - (float)RENDER_DISTANCE / 2 + mainCamera.getWorldPosition().z;
+			// float worldX = (int)((float)i - (float)RENDER_DISTANCE / 2 + mainCamera.getWorldPosition().x);
+			// float worldZ = (int)((float)j - (float)RENDER_DISTANCE / 2 + mainCamera.getWorldPosition().z);
 
+			float worldX = i - (int)RENDER_DISTANCE / 2 + (int)mainCamera.getWorldPosition().x;
+			float worldZ = j - (int)RENDER_DISTANCE / 2 + (int)mainCamera.getWorldPosition().z;
+
+			// float worldX = (float)i;
+			// float worldZ = (float)j;
 			vertices.push_back(worldX);
 
 			float height = NOISE_SCALE * noise.GetNoise(worldX, worldZ);
@@ -224,18 +253,27 @@ void render()
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 
-	unsigned int VBO;
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
+	unsigned int VBO[2];
+	glGenBuffers(2, VBO);
+
+	// position
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_DYNAMIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *)0);
+	glEnableVertexAttribArray(0);
+
+	// normals
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(float), &normals[0], GL_DYNAMIC_DRAW);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *)0);
+	glEnableVertexAttribArray(1);
 
 	unsigned int EBO;
 	glGenBuffers(1, &EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *)0);
-	glEnableVertexAttribArray(0);
 
 	glDrawElements(GL_TRIANGLES, (RENDER_DISTANCE - 1) * (RENDER_DISTANCE - 1) * 6, GL_UNSIGNED_INT, 0);
 }

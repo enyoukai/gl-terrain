@@ -33,24 +33,36 @@ public:
 
 	void moveForward(float deltaTime)
 	{
-		cameraPosition += cameraSpeed * cameraDirection * deltaTime;
+		glm::vec3 forwardVector = glm::normalize(glm::vec3(cameraDirection.x, 0, cameraDirection.z));
+		cameraPosition += cameraSpeed * forwardVector * deltaTime;
 	}
 
 	void moveRight(float deltaTime)
 	{
-		glm::vec3 localRight = glm::cross(cameraDirection, worldUp);
+		glm::vec3 localRight = glm::normalize(glm::cross(cameraDirection, worldUp));
 		cameraPosition += localRight * cameraSpeed * deltaTime;
 	}
 
 	void moveLeft(float deltaTime)
 	{
-		glm::vec3 localRight = glm::cross(cameraDirection, worldUp);
+		glm::vec3 localRight = glm::normalize(glm::cross(cameraDirection, worldUp));
 		cameraPosition -= localRight * cameraSpeed * deltaTime;
 	}
 
 	void moveBackward(float deltaTime)
 	{
-		cameraPosition -= cameraSpeed * cameraDirection * deltaTime;
+		glm::vec3 forwardVector = glm::normalize(glm::vec3(cameraDirection.x, 0, cameraDirection.z));
+		cameraPosition -= cameraSpeed * forwardVector * deltaTime;
+	}
+
+	void moveUp(float deltaTime)
+	{
+		cameraPosition += cameraSpeed * worldUp * deltaTime;
+	}
+
+	void moveDown(float deltaTime)
+	{
+		cameraPosition -= cameraSpeed * worldUp * deltaTime;
 	}
 
 	void rotateMouseToAngles(float xoffset, float yoffset)
@@ -77,6 +89,11 @@ public:
 	glm::vec3 getWorldPosition()
 	{
 		return cameraPosition;
+	}
+
+	void setSpeed(float speed)
+	{
+		this->cameraSpeed = speed;
 	}
 };
 

@@ -1,7 +1,9 @@
 #version 330
 
 out vec4 fragColor;
+
 in float height;
+in vec3 Normal;
 
 vec3 lightColor = vec3(1.0, 1.0, 1.0);
 float ambientStrength = 0.1;
