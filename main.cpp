@@ -14,8 +14,10 @@
 
 const int DEFAULT_WIDTH = 1920;
 const int DEFAULT_HEIGHT = 1080;
-const float RENDER_DISTANCE = 400.0f;
+const float RENDER_DISTANCE = 100.0f;
 const float FAR_PLANE = 1000.0f;
+
+const float DIFFUSE_EPSILON = 0.01f;
 
 const float OCTAVES = 6;
 const float NOISE_SCALE = 64;
@@ -71,7 +73,7 @@ int main()
 
 	lastFrame = glfwGetTime();
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -86,6 +88,9 @@ int main()
 
 		view = mainCamera.getViewMatrix();
 		shader.setMat4("view", view);
+
+		glm::vec3 cameraPosition = mainCamera.getWorldPosition();
+		shader.setVec3("lightPosition", cameraPosition);
 
 		render();
 
@@ -217,9 +222,6 @@ void render()
 	{
 		for (int j = 0; j < RENDER_DISTANCE; j++)
 		{
-			// float worldX = (int)((float)i - (float)RENDER_DISTANCE / 2 + mainCamera.getWorldPosition().x);
-			// float worldZ = (int)((float)j - (float)RENDER_DISTANCE / 2 + mainCamera.getWorldPosition().z);
-
 			float worldX = i - (int)RENDER_DISTANCE / 2 + (int)mainCamera.getWorldPosition().x;
 			float worldZ = j - (int)RENDER_DISTANCE / 2 + (int)mainCamera.getWorldPosition().z;
 
@@ -249,13 +251,26 @@ void render()
 		}
 	}
 
+	// generate normals
 	for (int i = 0; i < RENDER_DISTANCE; i++)
 	{
 		for (int j = 0; j < RENDER_DISTANCE; j++)
 		{
-			normals.push_back(1.0f);
-			normals.push_back(0.0f);
-			normals.push_back(0.0f);
+			// method later
+			float worldX = i - (int)RENDER_DISTANCE / 2 + (int)mainCamera.getWorldPosition().x;
+			float worldZ = j - (int)RENDER_DISTANCE / 2 + (int)mainCamera.getWorldPosition().z;
+
+			// float worldX = (float)i;
+			// float worldZ = (float)j;
+
+			glm::vec3 xTangent = glm::vec3(-DIFFUSE_EPSILON, NOISE_SCALE * noise.GetNoise(worldX - DIFFUSE_EPSILON, worldZ), 0) - glm::vec3(DIFFUSE_EPSILON, NOISE_SCALE * noise.GetNoise(worldX + DIFFUSE_EPSILON, worldZ), 0);
+			glm::vec3 zTangent = glm::vec3(0, NOISE_SCALE * noise.GetNoise(worldX, worldZ - DIFFUSE_EPSILON), -DIFFUSE_EPSILON) - glm::vec3(0, NOISE_SCALE * noise.GetNoise(worldX, worldZ + DIFFUSE_EPSILON), DIFFUSE_EPSILON);
+
+			glm::vec3 norm = glm::cross(zTangent, xTangent);
+
+			normals.push_back(norm.x);
+			normals.push_back(norm.y);
+			normals.push_back(norm.z);
 		}
 	}
 

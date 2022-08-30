@@ -4,16 +4,20 @@ out vec4 fragColor;
 
 in float height;
 in vec3 Normal;
+in vec3 Position;
 
 vec3 lightColor = vec3(1.0, 1.0, 1.0);
 float ambientStrength = 0.1;
 
+uniform vec3 lightPosition;
+
 // MAKE THESE ENUMS AND UNIFORMS LATER 
 void main()
 {
+	vec3 objectColor;
+
 	vec3 ambient = ambientStrength * lightColor;
 
-	vec3 objectColor;
 	if (height > 45)
 	{
 		objectColor = vec3(1.0f, 1.0f, 1.0f);
@@ -37,7 +41,14 @@ void main()
 		objectColor = vec3(14.0/255.0, 131.0/255.0, 198.0 / 255.0);
 	}
 
-	vec3 finalColor = ambient * objectColor;
+	vec3 lightRay = normalize(lightPosition - Position);
+	float diffuseStrength = max(dot(lightRay, Normal), 0.0);
+
+	vec3 diffuse = diffuseStrength * lightColor;
+
+	vec3 finalColor = (ambient + diffuse) * objectColor;
 
 	fragColor = vec4(finalColor, 1.0);
+
+
 }
