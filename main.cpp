@@ -14,7 +14,7 @@
 
 const int DEFAULT_WIDTH = 1920;
 const int DEFAULT_HEIGHT = 1080;
-const float RENDER_DISTANCE = 200.0f;
+const float RENDER_DISTANCE = 400.0f;
 const float FAR_PLANE = 1000.0f;
 
 const float OCTAVES = 6;
@@ -249,12 +249,25 @@ void render()
 		}
 	}
 
+	for (int i = 0; i < RENDER_DISTANCE; i++)
+	{
+		for (int j = 0; j < RENDER_DISTANCE; j++)
+		{
+			normals.push_back(1.0f);
+			normals.push_back(0.0f);
+			normals.push_back(0.0f);
+		}
+	}
+
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 
 	unsigned int VBO[2];
 	glGenBuffers(2, VBO);
+
+	unsigned int EBO;
+	glGenBuffers(1, &EBO);
 
 	// position
 	glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
@@ -270,10 +283,12 @@ void render()
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *)0);
 	glEnableVertexAttribArray(1);
 
-	unsigned int EBO;
-	glGenBuffers(1, &EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
 	glDrawElements(GL_TRIANGLES, (RENDER_DISTANCE - 1) * (RENDER_DISTANCE - 1) * 6, GL_UNSIGNED_INT, 0);
+
+	glDeleteBuffers(2, VBO);
+	glDeleteBuffers(1, &EBO);
+	glDeleteVertexArrays(1, &VAO);
 }
