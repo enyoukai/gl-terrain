@@ -11,6 +11,10 @@ float ambientStrength = 0.1;
 
 uniform vec3 lightPosition;
 
+float constant = 1.0;
+float linear = 0.014;
+float quadratic = 0.0007;
+
 // MAKE THESE ENUMS AND UNIFORMS LATER 
 void main()
 {
@@ -46,6 +50,13 @@ void main()
 
 	vec3 diffuse = diffuseStrength * lightColor;
 
+// TEST
+	float distance = length(lightPosition - Position);
+	float attenuation = 1.0 / (constant + linear * distance + 
+    		    quadratic * (distance * distance));   
+	ambient *= attenuation;
+	diffuse *= attenuation;
+// TEST
 	vec3 finalColor = (ambient + diffuse) * objectColor;
 
 	fragColor = vec4(finalColor, 1.0);
