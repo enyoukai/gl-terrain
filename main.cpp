@@ -40,6 +40,7 @@ float firstMouse = true;
 
 Camera mainCamera(glm::vec3(0.0f, 10.0f, 3.0f), CAMERA_SPEED_DEFAULT);
 FastNoiseLite noise;
+Shader shader("shader.vs", "shader.fs");
 
 GLFWwindow *window;
 
@@ -58,7 +59,7 @@ int main()
 	noise.SetFractalType(FastNoiseLite::FractalType_Ridged);
 	noise.SetFractalOctaves(OCTAVES);
 
-	Shader shader("shader.vs", "shader.fs");
+	shader.compile();
 	shader.use();
 
 	glm::mat4 model = glm::mat4(1.0f);
@@ -72,8 +73,6 @@ int main()
 	shader.setMat4("projection", projection);
 
 	lastFrame = glfwGetTime();
-
-	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -200,6 +199,24 @@ void processInputs()
 	}
 
 	// TODO: callback later
+
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
+	else
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+	{
+		shader.setBool("showNormals", true);
+	}
+	else
+	{
+		shader.setBool("showNormals", false);
+	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 	{
 		mainCamera.setSpeed(CAMERA_SPEED_FAST);

@@ -9,6 +9,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <string.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -29,6 +30,7 @@ public:
 		// ensure ifstream objects can throw exceptions:
 		vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 		fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
 		try
 		{
 			// open files
@@ -49,8 +51,12 @@ public:
 		{
 			std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ: " << e.what() << std::endl;
 		}
-		const char *vShaderCode = vertexCode.c_str();
-		const char *fShaderCode = fragmentCode.c_str();
+		vShaderCode = strdup(vertexCode.c_str());
+		fShaderCode = strdup(fragmentCode.c_str());
+	}
+
+	void compile()
+	{
 		// 2. compile shaders
 		unsigned int vertex, fragment;
 		// vertex shader
@@ -109,6 +115,8 @@ public:
 private:
 	// utility function for checking shader compilation/linking errors.
 	// ------------------------------------------------------------------------
+	const char *vShaderCode;
+	const char *fShaderCode;
 	void checkCompileErrors(unsigned int shader, std::string type)
 	{
 		int success;

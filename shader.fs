@@ -10,6 +10,7 @@ vec3 lightColor = vec3(1.0, 1.0, 1.0);
 float ambientStrength = 0.1;
 
 uniform vec3 lightPosition;
+uniform bool showNormals;
 
 float constant = 1.0;
 float linear = 0.014;
@@ -26,17 +27,17 @@ void main()
 	{
 		objectColor = vec3(1.0f, 1.0f, 1.0f);
 	}
-	else if (height > -10)
+	else if (height > 20)
 	{
 		objectColor = vec3(91.0f/255.0f, 91.0f/255.0f, 91.0f/255.0f);
 	}
-	else if (height > -30)
+	else if (height > 10)
 	{
 		// fragColor = vec4(0.34f, 0.49f, 0.27f, 1.0f);
 		objectColor = vec3(0.76f, 0.70f, 0.50f);
 		
 	}
-	else if (height > -40)
+	else if (height > 0)
 	{
 		objectColor = vec3(0.76f, 0.70f, 0.50f);
 	}
@@ -59,7 +60,15 @@ void main()
 // TEST
 	vec3 finalColor = (ambient + diffuse) * objectColor;
 
-	fragColor = vec4(finalColor, 1.0);
+	if (showNormals)
+	{
+		fragColor = vec4(Normal, 1.0);
+	}
+	else
+	{
+		fragColor = vec4(finalColor, 1.0);
+
+	}
 
 
 }
